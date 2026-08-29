@@ -10,6 +10,7 @@
   var NS = 'http://www.w3.org/2000/svg';
   var REDUCE = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var mqStack = window.matchMedia('(max-width: 1080px)');
+  var mqWide = window.matchMedia('(min-width: 1280px)');
 
   /* ===================================================================
      1 · small in-card visuals
@@ -394,31 +395,35 @@
   var wireLayer = $('#wireLayer');
   var pktLayer = $('#pktLayer');
 
+  // exit/entry sides are derived from live geometry (autoAnchors), so the same
+  // graph works in both the vertical and the horizontal layout.
   var CONNECTORS = [
-    { f: 'n-userinput', fs: 'bottom', t: 'n-web', ts: 'top', k: 'flow' },
-    { f: 'n-web', fs: 'bottom', t: 'n-agent', ts: 'top', k: 'flow' },
-    { f: 'n-agent', fs: 'bottom', t: 'n-router', ts: 'top', k: 'flow' },
-    { f: 'n-router', fs: 'bottom', t: 'n-pool', ts: 'top', k: 'flow' },
-    { f: 'n-pool', fs: 'bottom', t: 'n-tools', ts: 'top', k: 'flow' },
-    { f: 'n-tools', fs: 'bottom', t: 'n-verify', ts: 'top', k: 'flow' },
-    { f: 'n-verify', fs: 'bottom', t: 'n-output', ts: 'top', k: 'flow' },
+    // main task flow
+    { f: 'n-userinput', t: 'n-web', k: 'flow' },
+    { f: 'n-web', t: 'n-agent', k: 'flow' },
+    { f: 'n-agent', t: 'n-router', k: 'flow' },
+    { f: 'n-router', t: 'n-pool', k: 'flow' },
+    { f: 'n-pool', t: 'n-tools', k: 'flow' },
+    { f: 'n-tools', t: 'n-verify', k: 'flow' },
+    { f: 'n-verify', t: 'n-output', k: 'flow' },
 
-    { f: 'r-docs', fs: 'bottom', t: 'r-ingest', ts: 'top', k: 'rag' },
-    { f: 'r-ingest', fs: 'bottom', t: 'r-ocr', ts: 'top', k: 'rag' },
-    { f: 'r-ocr', fs: 'bottom', t: 'r-embed', ts: 'top', k: 'rag' },
-    { f: 'r-embed', fs: 'bottom', t: 'r-qdrant', ts: 'top', k: 'rag' },
-    { f: 'r-qdrant', fs: 'bottom', t: 'r-knowledge', ts: 'top', k: 'rag' },
+    // RAG internal pipeline
+    { f: 'r-docs', t: 'r-ingest', k: 'rag' },
+    { f: 'r-ingest', t: 'r-ocr', k: 'rag' },
+    { f: 'r-ocr', t: 'r-embed', k: 'rag' },
+    { f: 'r-embed', t: 'r-qdrant', k: 'rag' },
+    { f: 'r-qdrant', t: 'r-knowledge', k: 'rag' },
 
     // Agent <-> RAG : two-way. Agent sends a query into the knowledge base (to Qdrant),
     // Relevant Knowledge is returned to the Agent as grounding context.
-    { f: 'n-agent', fs: 'left', t: 'r-qdrant', ts: 'right', k: 'retr' },
-    { f: 'r-knowledge', fs: 'right', t: 'n-agent', ts: 'left', k: 'retr' },
+    { f: 'n-agent', t: 'r-qdrant', k: 'retr' },
+    { f: 'r-knowledge', t: 'n-agent', k: 'retr' },
 
     // Agent decides which tool to run (separate from the main Pool -> Tools flow)
-    { f: 'n-agent', fs: 'right', t: 'n-tools', ts: 'right', k: 'ctrl', bow: 58 },
+    { f: 'n-agent', t: 'n-tools', k: 'ctrl' },
 
     // Monitoring observes the security boundary
-    { f: 'secframe', fs: 'right', t: 'n-monitor', ts: 'left', k: 'watch' }
+    { f: 'secframe', t: 'n-monitor', k: 'watch' }
   ];
   var SPEED = { flow: 82, rag: 66, retr: 58, ctrl: 62, watch: 46 };
   var FILL = { flow: 'pktFlow', rag: 'pktRag', retr: 'pktRetr', ctrl: 'pktCtrl', watch: 'pktWatch' };
@@ -437,13 +442,25 @@
     if (side === 'right') return [x + r.width, y + r.height / 2];
     return [x + r.width / 2, y + r.height / 2];
   }
+  // pick exit/entry sides from the two elements' relative position — layout-agnostic
+  function autoAnchors(fr, tr) {
+    var dx = (tr.left + tr.width / 2) - (fr.left + fr.width / 2);
+    var dy = (tr.top + tr.height / 2) - (fr.top + fr.height / 2);
+    if (Math.abs(dx) >= Math.abs(dy)) return dx >= 0 ? ['right', 'left'] : ['left', 'right'];
+    return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom'];
+  }
   function pathD(a, b, bow) {
     var dx = b[0] - a[0], dy = b[1] - a[1];
     var horiz = Math.abs(dx) > Math.abs(dy);
     var k = Math.min(Math.max((horiz ? Math.abs(dx) : Math.abs(dy)) * 0.5, 30), 150);
     var c1, c2;
-    if (bow) {
-      // arc sideways through the gutter instead of cutting straight through cards
+    if (bow && horiz) {
+      // arc above / below a row instead of cutting straight through the cards
+      var sx = Math.sign(dx) || 1;
+      c1 = [a[0] + sx * k, a[1] + bow];
+      c2 = [b[0] - sx * k, b[1] + bow];
+    } else if (bow) {
+      // arc sideways through the gutter instead of cutting straight through a column
       var sy = Math.sign(dy) || 1;
       c1 = [a[0] + bow, a[1] + sy * k];
       c2 = [b[0] + bow, b[1] - sy * k];
@@ -485,13 +502,30 @@
     var stacked = mqStack.matches;
     if (REDUCE) ensureMarkers();
 
+    var wide = mqWide.matches;
+
     CONNECTORS.forEach(function (c) {
       if (stacked && (c.k === 'retr' || c.k === 'ctrl' || c.k === 'watch')) return;
       var fe = document.getElementById(c.f), te = document.getElementById(c.t);
       if (!fe || !te) return;
       if (!fe.getClientRects().length || !te.getClientRects().length) return;
 
-      var d = pathD(anchor(c.f, c.fs, box), anchor(c.t, c.ts, box), c.bow);
+      var fs, ts, bow = 0;
+      if (c.k === 'ctrl') {
+        // Agent -> Tools decision arc: route it clear of the cards in either layout
+        if (wide) { fs = 'bottom'; ts = 'bottom'; bow = 70; }
+        else { fs = 'right'; ts = 'right'; bow = 58; }
+      } else if (c.k === 'retr' && wide) {
+        // horizontal layout: the RAG strip is a row beneath the spine — exchange runs vertically
+        var toAgent = c.t === 'n-agent';
+        fs = toAgent ? 'top' : 'bottom';
+        ts = toAgent ? 'bottom' : 'top';
+      } else {
+        var aa = autoAnchors(fe.getBoundingClientRect(), te.getBoundingClientRect());
+        fs = aa[0]; ts = aa[1];
+      }
+
+      var d = pathD(anchor(c.f, fs, box), anchor(c.t, ts, box), bow);
       var halo = document.createElementNS(NS, 'path');
       halo.setAttribute('d', d);
       halo.setAttribute('class', 'wire-halo k-' + c.k);

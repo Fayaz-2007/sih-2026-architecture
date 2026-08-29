@@ -15,6 +15,14 @@ Built for an SIH judge presentation on a laptop/desktop; responsive down to mobi
 
 No build step. No external JS/CSS except Google Fonts (degrades gracefully offline).
 
+## Layout
+
+- **≥ 1280 px wide:** the architecture runs **horizontally** — the eight main modules left → right in one row, the RAG / Knowledge Base as a horizontal strip beneath it (two-way with the Agent), the Security & Sovereignty boundary wrapping the whole system, and the Live Network Monitor below-right, outside the boundary and wired to it.
+- **641 – 1279 px:** vertical two-column layout (RAG rail + spine).
+- **≤ 640 px:** single stacked column.
+
+All three keep the same logical flow, the same connectors, and the same animation. The page spans the full window width; there are no background gridlines.
+
 ## Run locally
 
 ```bash
