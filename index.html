@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>On-Premise Multi-Model AI Workbench — Architecture</title>
+<meta name="description" content="Interactive architecture walkthrough of an on-premise multi-model AI workbench." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;450;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<main class="page">
+  <!-- ============ SECTION HEADER ============ -->
+  <header class="lead" id="architecture">
+    <p class="lead__kicker"><span class="lead__spark"></span> System Architecture</p>
+    <h1 class="lead__title">On-Premise Multi-Model AI Workbench</h1>
+    <p class="lead__sub">
+      Every request is planned by an agent, routed to the right local model, executed with tools,
+      verified, and returned &mdash; without a single byte leaving the organisation&rsquo;s network.
+    </p>
+
+    <div class="lead__bar">
+      <ul class="legend" aria-label="Data flow legend">
+        <li><i class="legend__dot legend__dot--flow"></i> Task flow</li>
+        <li><i class="legend__dot legend__dot--retr"></i> Agent &harr; RAG</li>
+        <li><i class="legend__dot legend__dot--ctrl"></i> Agent &rarr; tools</li>
+        <li><i class="legend__dot legend__dot--watch"></i> Monitoring</li>
+      </ul>
+      <div class="lead__actions">
+        <span class="hint">Click any module to explore</span>
+        <button class="toggle" id="motionToggle" type="button" aria-pressed="true">
+          <span class="toggle__glyph" aria-hidden="true"></span>
+          <span class="toggle__label">Flow</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ ARCHITECTURE STAGE ============ -->
+  <section class="stage" aria-label="Architecture diagram">
+    <div class="grid-skin" aria-hidden="true"></div>
+
+    <!-- animated connectors + data packets -->
+    <svg class="wires" id="wires" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="pktFlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f2fbff" />
+          <stop offset="35%" stop-color="#5fe4ff" />
+          <stop offset="100%" stop-color="#5fe4ff" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="pktRag" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f0fff6" />
+          <stop offset="35%" stop-color="#57f5b8" />
+          <stop offset="100%" stop-color="#57f5b8" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="pktRetr" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f6f1ff" />
+          <stop offset="35%" stop-color="#b79bff" />
+          <stop offset="100%" stop-color="#b79bff" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="pktCtrl" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f3f6ff" />
+          <stop offset="35%" stop-color="#8ea2ff" />
+          <stop offset="100%" stop-color="#8ea2ff" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="pktWatch" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#eafff6" />
+          <stop offset="40%" stop-color="#4fe0c7" />
+          <stop offset="100%" stop-color="#4fe0c7" stop-opacity="0" />
+        </radialGradient>
+      </defs>
+      <g id="wireLayer"></g>
+      <g id="pktLayer"></g>
+    </svg>
+
+    <div class="arch" id="arch">
+      <!-- system enclosure: everything the security boundary wraps -->
+      <div class="enclosed" id="enclosed">
+        <!-- ===== SECURITY & SOVEREIGNTY (cross-cutting) ===== -->
+        <div class="secframe" id="secframe">
+          <span class="secframe__label">
+            <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 9 8 11 4.6-2 8-6 8-11V5l-8-3Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="m8.5 12 2.4 2.4L16 9.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Security &amp; Sovereignty
+          </span>
+          <i class="secframe__corner secframe__corner--tl"></i>
+          <i class="secframe__corner secframe__corner--tr"></i>
+          <i class="secframe__corner secframe__corner--bl"></i>
+          <i class="secframe__corner secframe__corner--br"></i>
+          <button class="secframe__open" data-mod="security" type="button" aria-label="Open Security &amp; Sovereignty details"></button>
+          <ul class="secframe__chips" aria-label="Sovereignty guarantees">
+            <li>100% On-Premise</li>
+            <li>No External AI APIs</li>
+            <li>Network Isolation</li>
+            <li>Access Control</li>
+            <li>Audit Logs</li>
+            <li>Data Protection</li>
+          </ul>
+          <!-- external connection attempt, blocked at the boundary -->
+          <div class="intruder" aria-hidden="true">
+            <span class="intruder__label">external request</span>
+            <span class="intruder__pkt"></span>
+            <span class="intruder__flash">BLOCKED</span>
+          </div>
+        </div>
+
+        <!-- ===== RAG / KNOWLEDGE BASE (supporting) ===== -->
+        <div class="kb" id="n-rag">
+          <button class="kb__open" data-mod="rag" type="button" aria-label="Open RAG / Knowledge Base details"></button>
+          <div class="kb__head">
+            <span class="kb__title">RAG / Knowledge Base</span>
+            <span class="kb__tag">Organisational memory</span>
+          </div>
+          <ol class="kb__steps">
+            <li class="kb__step" id="r-docs"><span class="kb__ico" data-viz="docs"></span><span class="kb__name">Documents</span></li>
+            <li class="kb__step" id="r-ingest"><span class="kb__ico" data-viz="ingest"></span><span class="kb__name">Document Ingestion</span></li>
+            <li class="kb__step" id="r-ocr"><span class="kb__ico" data-viz="ocr"></span><span class="kb__name">OCR / Chunking</span></li>
+            <li class="kb__step" id="r-embed"><span class="kb__ico" data-viz="embed"></span><span class="kb__name">Embeddings</span></li>
+            <li class="kb__step" id="r-qdrant"><span class="kb__ico" data-viz="qdrant"></span><span class="kb__name">Qdrant</span></li>
+            <li class="kb__step kb__step--out" id="r-knowledge"><span class="kb__ico" data-viz="knowledge"></span><span class="kb__name">Relevant Knowledge</span></li>
+          </ol>
+          <span class="kb__explore">Explore</span>
+        </div>
+
+        <!-- ===== MAIN PROCESSING SPINE ===== -->
+        <div class="spine">
+          <button class="node" id="n-userinput" data-mod="userinput" type="button">
+            <span class="node__viz" data-viz="userinput"></span>
+            <span class="node__name">User Input</span>
+            <span class="node__desc">Where the request begins.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-web" data-mod="web" type="button">
+            <span class="node__viz" data-viz="web"></span>
+            <span class="node__name">Secure Web Interface</span>
+            <span class="node__desc">Authenticated entry point to the workbench.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-agent" data-mod="agent" type="button">
+            <span class="node__viz" data-viz="agent"></span>
+            <span class="node__name">Agent Orchestrator</span>
+            <span class="node__desc">Plans and coordinates AI task execution.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-router" data-mod="router" type="button">
+            <span class="node__viz" data-viz="router"></span>
+            <span class="node__name">Model Router</span>
+            <span class="node__desc">Selects the right local model for each task.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-pool" data-mod="pool" type="button">
+            <span class="node__viz" data-viz="pool"></span>
+            <span class="node__name">Local Multi-Model Pool</span>
+            <span class="node__desc">Runs open-weight models entirely on-premise.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-tools" data-mod="tools" type="button">
+            <span class="node__viz" data-viz="tools"></span>
+            <span class="node__name">Tools &amp; Execution Layer</span>
+            <span class="node__desc">Runs code, queries data, calls internal tools.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-verify" data-mod="verify" type="button">
+            <span class="node__viz" data-viz="verify"></span>
+            <span class="node__name">Verification Layer</span>
+            <span class="node__desc">Checks results before they reach the user.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+
+          <button class="node" id="n-output" data-mod="output" type="button">
+            <span class="node__viz" data-viz="output"></span>
+            <span class="node__name">Output Generation</span>
+            <span class="node__desc">Delivers the final, verified answer.</span>
+            <span class="node__explore">Explore</span>
+          </button>
+        </div>
+
+        <!-- ===== supporting note: on-prem infrastructure ===== -->
+        <div class="infra">
+          <span class="infra__title">Local Infrastructure</span>
+          <ul class="infra__list">
+            <li>GPU inference nodes</li>
+            <li>Ollama runtime</li>
+            <li>Qdrant vector store</li>
+            <li>PostgreSQL &middot; object store</li>
+          </ul>
+          <span class="infra__seal">Air-gapped deployment</span>
+        </div>
+      </div><!-- /.enclosed -->
+
+      <!-- ===== LIVE NETWORK MONITORING (supporting, outside the boundary) ===== -->
+      <aside class="side">
+        <div class="monitor" id="n-monitor">
+          <button class="monitor__open" data-mod="monitor" type="button" aria-label="Open Live Network Monitor dashboard"></button>
+          <div class="monitor__head">
+            <span class="monitor__title">Live Network Monitor</span>
+            <span class="monitor__live"><i></i> live</span>
+          </div>
+          <div class="monitor__stats">
+            <div class="stat">
+              <span class="stat__k">Outbound connections</span>
+              <span class="stat__v stat__v--zero">0</span>
+            </div>
+            <div class="stat">
+              <span class="stat__k">System</span>
+              <span class="stat__v">On-Premise</span>
+            </div>
+          </div>
+          <svg class="spark" id="spark" viewBox="0 0 260 70" preserveAspectRatio="none" aria-hidden="true">
+            <polyline class="spark__grid" points="0,35 260,35" />
+            <polyline class="spark__line" id="sparkLine" points="" />
+          </svg>
+          <div class="monitor__foot">
+            <span class="monitor__net" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+            <span class="monitor__tag">LAN traffic mirrored at the gateway</span>
+          </div>
+          <span class="monitor__explore">Explore</span>
+        </div>
+      </aside>
+    </div><!-- /.arch -->
+
+    <p class="stage__caption">
+      Static layout shows the design &middot; moving packets show how it runs &middot; open a module for the technology behind it
+    </p>
+  </section>
+</main>
+
+<!-- ============ DETAIL SHEET ============ -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__scrim" data-close></div>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" tabindex="-1">
+    <button class="sheet__close" type="button" data-close aria-label="Close">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Close</span>
+    </button>
+    <div class="sheet__viz" id="sheetViz"></div>
+    <div class="sheet__body">
+      <p class="sheet__kicker" id="sheetKicker"></p>
+      <h3 class="sheet__title" id="sheetTitle"></h3>
+      <p class="sheet__blurb" id="sheetBlurb"></p>
+
+      <div class="sheet__block">
+        <p class="sheet__h">How it works</p>
+        <div class="flowline" id="sheetFlow"></div>
+      </div>
+
+      <div class="sheet__block" id="sheetNoteBlock" hidden>
+        <p class="sheet__h">Example</p>
+        <p class="sheet__note" id="sheetNote"></p>
+      </div>
+
+      <div class="sheet__block">
+        <p class="sheet__h">Technology</p>
+        <div class="chips" id="sheetTech"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
