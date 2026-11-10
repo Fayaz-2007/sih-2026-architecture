@@ -15,6 +15,10 @@ Built for an SIH judge presentation on a laptop/desktop; responsive down to mobi
 
 No build step. No external JS/CSS except Google Fonts (degrades gracefully offline).
 
+## 🛠️ Tech Stack
+
+![](https://skillicons.dev/icons?i=html,css,js,py)
+
 ## Layout
 
 - **≥ 1280 px wide:** the architecture runs **horizontally** — the eight main modules left → right in one row, the RAG / Knowledge Base as a horizontal strip beneath it (two-way with the Agent), the Security & Sovereignty boundary wrapping the whole system, and the Live Network Monitor below-right, outside the boundary and wired to it.
